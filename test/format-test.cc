@@ -2118,44 +2118,14 @@ TEST(format_test, constexpr_parse_format_specs) {
   static_assert(parse_test_specs("{<").res == handler::error, "");
 }
 
-struct test_parse_context {
-  typedef char char_type;
-
-  FMT_CONSTEXPR int next_arg_id() { return 11; }
-  template <typename Id> FMT_CONSTEXPR void check_arg_id(Id) {}
-
-  FMT_CONSTEXPR const char* begin() { return nullptr; }
-  FMT_CONSTEXPR const char* end() { return nullptr; }
-
-  void on_error(const char*) {}
-};
-
-struct test_context {
-  using char_type = char;
-  using format_arg = fmt::basic_format_arg<test_context>;
-  using parse_context_type = fmt::format_parse_context;
-
-  template <typename T> struct formatter_type {
-    using type = fmt::formatter<T, char_type>;
-  };
-
-  template <typename Id>
-  FMT_CONSTEXPR fmt::basic_format_arg<test_context> arg(Id id) {
-    return fmt::detail::make_arg<test_context>(id);
-  }
-
-  void on_error(const char*) {}
-
-  FMT_CONSTEXPR test_context error_handler() { return *this; }
-};
-
 template <size_t N>
 FMT_CONSTEXPR fmt::format_specs parse_specs(const char (&s)[N]) {
   auto specs = fmt::format_specs();
-  auto parse_ctx = test_parse_context();
-  auto ctx = test_context();
-  fmt::detail::specs_handler<test_parse_context, test_context> h(
-      specs, parse_ctx, ctx);
+  auto parse_ctx = fmt::format_parse_context({});
+  auto buf = fmt::detail::counting_buffer<>();
+  auto format_ctx =
+      fmt::buffer_context<char>(fmt::detail::buffer_appender<char>(buf), {});
+  auto h = fmt::detail::specs_handler<char>(specs, parse_ctx, format_ctx);
   parse_format_specs(s, s + N, h);
   return specs;
 }
@@ -2176,6 +2146,18 @@ TEST(format_test, constexpr_specs_handler) {
   static_assert(parse_specs(".{22}").precision == 22, "");
   static_assert(parse_specs("d").type == 'd', "");
 }
+
+struct test_parse_context {
+  typedef char char_type;
+
+  FMT_CONSTEXPR int next_arg_id() { return 11; }
+  template <typename Id> FMT_CONSTEXPR void check_arg_id(Id) {}
+
+  FMT_CONSTEXPR const char* begin() { return nullptr; }
+  FMT_CONSTEXPR const char* end() { return nullptr; }
+
+  void on_error(const char*) {}
+};
 
 template <size_t N>
 FMT_CONSTEXPR fmt::detail::dynamic_format_specs<char> parse_dynamic_specs(

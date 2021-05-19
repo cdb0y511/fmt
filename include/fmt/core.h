@@ -720,7 +720,7 @@ template <typename T> class buffer {
   FMT_MSC_WARNING(suppress : 26495)
   buffer(size_t sz) FMT_NOEXCEPT : size_(sz), capacity_(sz) {}
 
-  buffer(T* p = nullptr, size_t sz = 0, size_t cap = 0) FMT_NOEXCEPT
+  constexpr buffer(T* p = nullptr, size_t sz = 0, size_t cap = 0) FMT_NOEXCEPT
       : ptr_(p),
         size_(sz),
         capacity_(cap) {}
@@ -892,7 +892,7 @@ template <typename T = char> class counting_buffer final : public buffer<T> {
   }
 
  public:
-  counting_buffer() : buffer<T>(data_, 0, buffer_size) {}
+  constexpr counting_buffer() : buffer<T>(data_, 0, buffer_size) {}
   counting_buffer(counting_buffer&&) : buffer<T>(data_, 0, buffer_size) {}
 
   size_t count() { return count_ + this->size(); }
